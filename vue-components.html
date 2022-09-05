@@ -6,13 +6,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Document</title>
         <style>
-            /* This style is just to demonstrate hide/show functionality with v-if derivative */
-            .box {
-                background-color: pink;
-                height: 100px;
-                width: 100px;
-            }
-
             /* This style is necessary for v-cloak rendering delay — see the description below */
             [v-cloak] {
                 display: none;
@@ -26,7 +19,9 @@
         
         After you add the v-cloak attribute, you need set the style to be display:none; — what happens is that when vue is rendering, this div will have the v-cloak attribute, so the whole vue html app is hidden while vue is rendering. Only when it is done, the vcloak automatically disappears and the display: none no longer apply to this div.-->
         <div id="app" v-cloak>
-            <h4>Vue 3 Tutorial (Normal HTML)</h4>
+            <h4>Vue 3 Tutorial on Components</h4>
+
+            <login-form />
             <!-- the double braces is known as double mustache syntax -->
             {{greeting}}
 
@@ -38,51 +33,6 @@
             <!-- v-if is like an if statement, if the value of 'isVisible' is true, then display will show, else it wont show. -->
             <div v-if="isVisible" class="box"></div>
             <br />
-            <!-- basically v-if and v-show is the same — if true the html tag will appear else it won't appear.
-            The difference however, is that for v-if = false, what will happen is the entire DOM won't render (i..e inspect element also cannot find). But for v-show, you inspect element can find, just see it has style of display:none;
-            TLDR; use v-show when u need to toggle DOM frequently for performance -->
-            <!-- <div v-show="isVisible" class="box"></div> -->
-
-            <!-- guess what, there's v-if, and also v-else-if and v-else -->
-            <!-- if show1 is true, then 1 will show, else if show2 is true, then 2 will show, else 3 will show — basically a simple if else statement -->
-            <div v-if="show1">1</div>
-            <div v-else-if="show2">2</div>
-            <div v-else>3</div>
-            <br />
-
-            <!-- Events and Methods -->
-            <!-- v-on is a on-xxx method, like on-click. Here we have onclick= some-javascript-code, in this case, I made it such that the variable clickDetected is set to true, which shows the HTML below with v-if="clickDetected" -->
-            <button v-on:click="clickDetected = true">
-                Click Event Detector Button
-            </button>
-            <div v-if="clickDetected">I detected a click!</div>
-            <br /><br />
-            <!-- You can extend the use case to toggle buttons -->
-            <!-- Also, you can replace v-on:click with @click, it's just a shorthand syntax -->
-            <button @click="toggleBtn = !toggleBtn">Toggle Btn</button>
-            <div v-if="toggleBtn">Btn Toggled To True</div>
-
-            <br /><br />
-            <!-- You can even make your toggle function more complicated than just setting true/false 
-            toggleBtnWithAlert is a method that not only toggle buttons but sends an alert too-->
-            <button @click="toggleBtnWithAlert">Toggle Btn with Alert</button>
-            <div v-if="toggleBtnAlert">Btn Toggled With Alert Set To True</div>
-
-            <br /><br />
-            <!-- On keyup event — checks enter key being keyup. Runs alertOnEnterKeyKeyup method on keyup.
-            The keyupInputFIeldValue variable will follow the value of the input field, which i will alert on enter key keyup 
-            The .enter is a modifier-->
-            <input
-                @keyup.enter="alertOnEnterKeyKeyup(
-                'i can even pass in example argument here.')"
-                v-model="keyupInputFieldValue"
-            />
-
-            <br /><br />
-            <!-- This is chaining modifiers, here, we're using .preventDefault and .stopPropagation in form submission -->
-            <button @click.prevent.stop="toggleBtnWithAlert">
-                Form Submit Example (nth to see visually, look at code)
-            </button>
         </div>
 
         <script src="https://unpkg.com/vue@3"></script>
@@ -97,12 +47,6 @@
                         myMessage: "Secret Message",
                         // if this is set to false, the pink box will disappear
                         isVisible: true,
-                        show1: false,
-                        show2: true,
-                        clickDetected: false,
-                        toggleBtn: false,
-                        toggleBtnAlert: false,
-                        keyupInputFieldValue: "press enter here to alert",
                     };
                 },
                 methods: {
@@ -118,6 +62,64 @@
                         );
                     },
                 },
+            });
+
+            // create the component after you define the app and before you mount the app
+            // takes in 2 params - one is the custom html tag you created, another one is your options object
+            app.component("login-form", {
+                // The first input is the original input
+                // The next 2 inputs are the custom component input
+                // v-bind is to turn the regular html attribute into something that can be parsed as javascript, so when u use labelForChildComponent="abc", you're able to pass the {{emailLabel}} variable content to labelForChildComponent which the child component can access
+                template: `
+                    
+                    <form @submit.prevent="handleSubmit">
+                        <h1> {{title}} </h1>
+                        Email (Original Input): <input type="email" v-model="emailInput"/>
+                        <br><br>
+                        <custom-input type="password" v-bind:labelForChildComponent="emailLabel" v-model="emailInput"/>
+                        <br><br>
+                        
+                        <custom-input type="password" v-bind:labelForChildComponent="passwordLabel"/>
+                        <br><br>
+                        <button>Login</button>
+                    </form>
+                `,
+                // if you're using other custom components in your component, you need to reference them here.
+                components: ["custom-input"],
+                // data method to this component to get variables
+                data() {
+                    return {
+                        // This value can only be used INSIDE this component, not the entire vue app.
+                        // So you can only add this to the template above
+                        title: "Login Form",
+                        emailInput: "",
+                        passwordInput: "",
+                        emailLabel: "Email (Vue Component Input)",
+                        passwordLabel: "Password (Vue Component Input)",
+                    };
+                },
+                methods: {
+                    handleSubmit() {
+                        alert(
+                            "submitted" +
+                                "\nEmail: " +
+                                this.emailInput +
+                                "\nPassword: " +
+                                this.passwordInput
+                        );
+                    },
+                },
+            });
+            app.component("custom-input", {
+                template: `
+                    <label>
+
+                        {{labelForChildComponent}}
+                        <input type="text">
+                    </label>
+                `,
+
+                props: ["labelForChildComponent"],
             });
             // Mount/attach the vue instance to a particular html element
             // This vue element can interact with all DOM element inside the #app div
